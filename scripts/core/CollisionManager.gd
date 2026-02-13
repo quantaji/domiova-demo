@@ -15,7 +15,7 @@ func _ready() -> void:
 	collision_resolver = CollisionResolver.new(collision_config, follicle_radius)
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	var follicles = FollicleManager.get_all_follicles()
 	
 	for i in range(follicles.size()):

@@ -1,10 +1,13 @@
 {
     "world": {
         "arena": {
-            "width": 1280,
-            "height": 800,
-            "position_x": 0,
-            "position_y": 400,
+            "width": 1240,
+            "height": 760,
+            "position_x": 20,
+            "position_y": 420,
+            "bounce_margin": 5.0,
+            "bounce_speed": 150.0,
+            "bounce_control_lockout": 0.2,
             "background_color": {
                 "r": 0.10,
                 "g": 0.10,
@@ -24,6 +27,37 @@
             "velocity_change_factor": 0.8,
             "min_explosion_speed": 150.0,
             "collision_cooldown": 0.3
+        },
+        "far_field": {
+            "position_x": 640,
+            "position_y": 80,
+            "pituitary_radius": 130,
+            "emission_origin_offset_y": 110,
+            "pituitary_color": {"r": 0.4, "g": 0.3, "b": 0.7, "a": 0.5},
+            "pituitary_border_color": {"r": 0.6, "g": 0.5, "b": 0.9, "a": 0.9},
+            "pituitary_border_width": 3.0
+        },
+        "hormone": {
+            "pellet_pool_size": 400,
+            "pellet_lifetime": 12.0,
+            "fsh": {
+                "color": {"r": 1.0, "g": 0.4, "b": 0.8},
+                "speed": 90.0,
+                "oscillation_amplitude": 50.0,
+                "oscillation_frequency": 0.5,
+                "emission_interval": 4.0,
+                "emission_count": 60,
+                "pellet_radius": 12.0
+            },
+            "lh": {
+                "color": {"r": 1.0, "g": 0.9, "b": 0.2},
+                "speed": 90.0,
+                "oscillation_amplitude": 15.0,
+                "oscillation_frequency": 1.2,
+                "emission_interval": 8.12512413412,
+                "emission_count": 40,
+                "pellet_radius": 10.5
+            }
         }
     },
     "player_follicle": {

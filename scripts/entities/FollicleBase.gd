@@ -17,11 +17,14 @@ func _ready() -> void:
 	var size_cfg = ConfigManager.get_config("%s.size" % prefix)
 	var color_cfg = ConfigManager.get_config("%s.appearance.color" % prefix)
 	
+	radius = size_cfg.collision_radius
+	
 	movement_system = MovementSystem.new(
 		move_cfg.max_speed,
 		move_cfg.acceleration_factor,
 		move_cfg.deceleration_factor,
 		move_cfg.min_speed,
+		radius,
 		ConfigManager.get_config("world.arena")
 	)
 	
@@ -31,7 +34,6 @@ func _ready() -> void:
 	var random_angle = randf_range(0, TAU)
 	movement_system.velocity = Vector2(cos(random_angle), sin(random_angle)) * random_speed
 	
-	radius = size_cfg.collision_radius
 	circle_color = Color(color_cfg.r, color_cfg.g, color_cfg.b)
 	
 	_init_controller()
@@ -63,13 +65,13 @@ func _physics_process(delta: float) -> void:
 	
 	# Move with physics using move_and_collide (not move_and_slide)
 	# This allows us to handle follicle-follicle collisions separately in CollisionManager
-	var collision = move_and_collide(movement_system.velocity * delta)
+	var _collision = move_and_collide(movement_system.velocity * delta)
 	
 	# Collision with world/static bodies is handled by move_and_collide result
 	# Follicle-follicle collisions are handled by CollisionManager in a separate pass
 	
-	# Clamp to bounds
-	global_position = movement_system.clamp_to_bounds(global_position)
+	# Check boundary collision and bounce
+	global_position = movement_system.check_and_bounce(global_position)
 
 
 func _draw() -> void:

@@ -6,6 +6,7 @@
 radius = 40.0
 
 [node name="NPCFollicle" type="CharacterBody2D" unique_id=1639706557]
+z_index = 10
 script = ExtResource("1_58e6q")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1134839346]

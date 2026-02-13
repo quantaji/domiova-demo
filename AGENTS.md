@@ -263,3 +263,50 @@ The level can be published as a Web export on GitHub Pages at a github.io domain
 3. Enable GitHub Pages for the branch and folder.
 4. Prefer single thread Web export for broad compatibility.
 5. Watch for file size limits and caching behavior.
+
+## 11. Implementation notes
+
+This section documents implementation decisions validated during early prototyping.
+
+### Collision system
+
+1. Use elastic collision with explosion push. Follicles exchange velocity along collision normal and receive a fixed outward impulse to guarantee separation.
+2. Set min_explosion_speed to 150.0 to prevent sticking artifacts.
+3. Apply collision response in a central CollisionManager after all movement.
+4. Use move_and_collide instead of move_and_slide for direct velocity control.
+5. Add collision cooldown of 0.3 seconds. AI control is suppressed after collision to prevent immediate re-approach.
+
+### Configuration and file structure
+
+1. Store all parameters in a single config.json file.
+2. Access config via dot notation through ConfigManager.
+3. Make missing keys cause fatal errors by design. This enforces completeness.
+4. Use three script folders: core for managers, entities for gameplay, ui for presentation.
+
+### NPC AI behavior
+
+1. NPCs pick random target positions in the arena.
+2. NPCs move toward target using normalized direction.
+3. AI is suppressed during collision cooldown. This creates emergent avoidance behavior.
+
+### Initial conditions
+
+1. All follicles spawn with random velocity.
+2. Direction is uniformly random from 0 to 2π.
+3. Magnitude is random within configured range. Player 80 to 150, NPC 60 to 100.
+4. Follicles bounce off arena edges using velocity reversal with damping.
+   - Detection uses bounce_margin (default 5.0px) from edge plus follicle radius
+   - Bounce applies bounce_damping (default 0.8) to preserve 80% of speed
+   - Velocity component perpendicular to boundary is reversed and scaled
+5. Position is clamped to valid boundary on bounce to prevent penetration.
+
+### Far field hormone emission system
+
+1. Far field represents the pituitary gland as a visual control center positioned above the ovary arena.
+2. Hormone pellets (FSH and LH) are emitted in 360-degree circular waves from the pituitary boundary.
+3. Pellet motion combines radial movement with perpendicular sine wave oscillation: `position = start + direction * speed * time + perpendicular * amplitude * sin(TAU * freq * time)`.
+4. Object pooling with 400 pre-instantiated pellets prevents allocation overhead. Pool expands by 100 if depleted.
+5. Dual timer system enables independent FSH and LH emission. Each hormone has separate emission_interval and emission_count parameters.
+6. Z-index layering ensures visual hierarchy: arena background (0), pellets (5), follicles (10).
+7. FSH pellets render at 12.0px radius, LH at 10.5px radius, reflecting biological size difference.
+8. Collision signals are intentionally disabled. Future receptor system will control selective hormone absorption with per-follicle cooldown.
