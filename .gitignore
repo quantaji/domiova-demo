@@ -1,0 +1,35 @@
+# Godot 4+ specific ignores
+.godot/
+.imported/
+*.import
+/android/
+/ios/
+/web/
+
+# Godot export directories
+export/
+dist/
+
+# User-specific settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build and temp files
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.o
+*.obj
+
+# Python tools (if used)
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/

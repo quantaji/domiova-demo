@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://8bxaana8c1qp"]
+
+[ext_resource type="Script" path="res://scripts/entities/NPCFollicle.gd" id="1_58e6q"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_yjgvl"]
+radius = 40.0
+
+[node name="NPCFollicle" type="CharacterBody2D" unique_id=1639706557]
+script = ExtResource("1_58e6q")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1134839346]
+shape = SubResource("CircleShape2D_yjgvl")

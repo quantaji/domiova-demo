@@ -1,0 +1,61 @@
+{
+    "world": {
+        "arena": {
+            "width": 1280,
+            "height": 800,
+            "position_x": 0,
+            "position_y": 400,
+            "background_color": {
+                "r": 0.10,
+                "g": 0.10,
+                "b": 0.12
+            },
+            "border_color": {
+                "r": 0.85,
+                "g": 0.85,
+                "b": 0.85
+            },
+            "border_width": 3.0
+        },
+        "collision": {
+            "extra_radius": 0.0,
+            "separation_distance": 8.0,
+            "push_strength": 0.4,
+            "velocity_change_factor": 0.8,
+            "min_explosion_speed": 150.0,
+            "collision_cooldown": 0.3
+        }
+    },
+    "player_follicle": {
+        "size": {
+            "collision_radius": 40.0
+        },
+        "appearance": {
+            "color": {"r": 1.0, "g": 0.0, "b": 0.0}
+        },
+        "movement": {
+            "max_speed": 240.0,
+            "acceleration_factor": 10.0,
+            "deceleration_factor": 10.0,
+            "min_speed": 60.0,
+            "initial_speed_range": {"min": 80.0, "max": 150.0}
+        }
+    },
+    "npc_follicle": {
+        "count": 8,
+        "size": {
+            "collision_radius": 40.0
+        },
+        "appearance": {
+            "color": {"r": 1.0, "g": 0.4, "b": 0.5}
+        },
+        "movement": {
+            "max_speed": 120.0,
+            "acceleration_factor": 10.0,
+            "deceleration_factor": 10.0,
+            "min_speed": 30.0,
+            "target_pickup_distance": 12.0,
+            "initial_speed_range": {"min": 60.0, "max": 100.0}
+        }
+    }
+}
