@@ -1,10 +1,10 @@
 {
     "world": {
         "arena": {
-            "width": 1240,
-            "height": 760,
-            "position_x": 20,
-            "position_y": 420,
+            "width": 1200,
+            "height": 1333,
+            "position_x": 0,
+            "position_y": 667,
             "bounce_margin": 5.0,
             "bounce_speed": 150.0,
             "bounce_control_lockout": 0.2,
@@ -29,9 +29,9 @@
             "collision_cooldown": 0.3
         },
         "far_field": {
-            "position_x": 640,
-            "position_y": 80,
-            "pituitary_radius": 130,
+            "position_x": 600,
+            "position_y": 140,
+            "pituitary_radius": 180,
             "emission_origin_offset_y": 110,
             "pituitary_color": {"r": 0.4, "g": 0.3, "b": 0.7, "a": 0.5},
             "pituitary_border_color": {"r": 0.6, "g": 0.5, "b": 0.9, "a": 0.9},
@@ -58,6 +58,36 @@
                 "emission_count": 40,
                 "pellet_radius": 10.5
             }
+        },
+        "secretion": {
+            "e2": {
+                "pool_size": 100,
+                "pool_expand_size": 50,
+                "emission_count": 4,
+                "color": {"r": 0.8, "g": 0.2, "b": 0.9},
+                "square_half_size": 8.0,
+                "speed_phase1": 120.0,
+                "speed_phase2": 300.0,
+                "lifetime": 15.0
+            },
+            "inhibin_b": {
+                "pool_size": 200,
+                "pool_expand_size": 100,
+                "emission_count": 15,
+                "color": {"r": 0.2, "g": 0.8, "b": 0.3},
+                "square_half_size": 6.0,
+                "speed_phase1": 80.0,
+                "speed_phase2": 200.0,
+                "lifetime": 15.0
+            }
+        },
+        "lh_receptor": {
+            "receptor_radius": 5.0,
+            "receptor_color": {"r": 1.0, "g": 0.6, "b": 0.1},
+            "max_count": 12,
+            "orbit_radius": 45.0,
+            "rotation_speed": 72.0,
+            "z_index": 10
         }
     },
     "player_follicle": {

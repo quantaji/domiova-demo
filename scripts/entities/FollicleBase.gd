@@ -7,6 +7,11 @@ var movement_system: MovementSystem
 var radius: float
 var circle_color: Color
 var collision_cooldown_timer: float = 0.0
+var lh_receptor_count: int = 0
+var rotation_angle: float = 0.0
+
+# LH receptor configuration
+var lh_receptor_config: Dictionary
 
 @export var is_player: bool = false
 
@@ -18,6 +23,9 @@ func _ready() -> void:
 	var color_cfg = ConfigManager.get_config("%s.appearance.color" % prefix)
 	
 	radius = size_cfg.collision_radius
+	
+	# Load LH receptor configuration
+	lh_receptor_config = ConfigManager.get_config("world.lh_receptor")
 	
 	movement_system = MovementSystem.new(
 		move_cfg.max_speed,
@@ -53,6 +61,11 @@ func _physics_process(delta: float) -> void:
 	if collision_cooldown_timer > 0:
 		collision_cooldown_timer -= delta
 	
+	# Update LH receptor rotation
+	if lh_receptor_count > 0:
+		rotation_angle += deg_to_rad(lh_receptor_config.rotation_speed) * delta
+		queue_redraw()
+	
 	# Get direction from controller (suppressed during cooldown)
 	var direction = Vector2.ZERO
 	if collision_cooldown_timer <= 0:
@@ -75,5 +88,43 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# Draw filled circle
+	# Draw main follicle circle
 	draw_circle(Vector2.ZERO, radius, circle_color)
+	
+	# Draw LH receptors (orange circles rotating around the follicle)
+	if lh_receptor_count > 0:
+		var receptor_color = Color(
+			lh_receptor_config.receptor_color.r,
+			lh_receptor_config.receptor_color.g,
+			lh_receptor_config.receptor_color.b
+		)
+		var receptor_radius = lh_receptor_config.receptor_radius
+		var orbit_radius = lh_receptor_config.orbit_radius
+		
+		for i in range(lh_receptor_count):
+			var angle = rotation_angle + (TAU * i / lh_receptor_count)
+			var receptor_pos = Vector2(
+				cos(angle) * orbit_radius,
+				sin(angle) * orbit_radius
+			)
+			draw_circle(receptor_pos, receptor_radius, receptor_color)
+
+
+## Emit E2 hormone (available to all follicles)
+func emit_e2() -> void:
+	if SecretionManager:
+		SecretionManager.emit_e2(global_position)
+
+
+## Emit Inhibin B hormone (available to all follicles)
+func emit_inhibin_b() -> void:
+	if SecretionManager:
+		SecretionManager.emit_inhibin_b(global_position)
+
+
+## Acquire LH receptor (skill 3, increases count up to max)
+func acquire_lh_receptor() -> void:
+	var max_receptors = lh_receptor_config.max_count
+	if lh_receptor_count < max_receptors:
+		lh_receptor_count += 1
+		queue_redraw()
