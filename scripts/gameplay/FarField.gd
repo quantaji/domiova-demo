@@ -60,6 +60,9 @@ func _load_config() -> void:
 	)
 	pituitary_border_width = far_field_cfg.pituitary_border_width
 	
+	# Set FarField position from config
+	global_position = Vector2(far_field_cfg.position_x, far_field_cfg.position_y)
+	
 	# Load Near Field boundaries from arena config
 	var arena = ConfigManager.get_config("world.arena")
 	near_field_rect = Rect2(

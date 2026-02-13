@@ -17,6 +17,7 @@ var square_half_size: float = 8.0
 var speed_phase1: float = 120.0
 var speed_phase2: float = 300.0
 var lifetime: float = 15.0
+var phase2_alpha: float = 0.25  # 75% transparent in phase 2
 
 # World boundaries (from config)
 var near_field_rect: Rect2
@@ -57,6 +58,7 @@ func activate(
 	speed_phase1 = p_config.speed_phase1
 	speed_phase2 = p_config.speed_phase2
 	lifetime = p_config.lifetime
+	phase2_alpha = p_config.get("phase2_alpha", 0.25)
 	
 	# World boundaries
 	near_field_rect = p_near_field_rect
@@ -89,6 +91,7 @@ func _get_direction_to_pituitary() -> Vector2:
 func _check_phase_transition() -> void:
 	if current_phase == 1 and _is_outside_near_field(global_position):
 		current_phase = 2
+		queue_redraw()  # 触发重新渲染以应用新的透明度
 
 
 func _process(delta: float) -> void:
@@ -121,6 +124,9 @@ func _process(delta: float) -> void:
 		
 		# Move toward pituitary
 		global_position += dir_to_pituitary * speed_phase2 * delta
+	
+	# Redraw every frame to reflect position and phase changes
+	queue_redraw()
 
 
 func _on_reached_pituitary() -> void:
@@ -142,4 +148,10 @@ func _draw() -> void:
 	
 	# Draw as a square (not a circle)
 	var rect = Rect2(-Vector2(square_half_size, square_half_size), Vector2(square_half_size * 2, square_half_size * 2))
-	draw_rect(rect, color, true)
+	
+	# Determine draw color based on phase
+	var draw_color = Color(color.r, color.g, color.b, color.a)
+	if current_phase == 2:
+		draw_color.a = phase2_alpha
+	
+	draw_rect(rect, draw_color, true)

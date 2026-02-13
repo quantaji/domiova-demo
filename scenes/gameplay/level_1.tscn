@@ -4,11 +4,11 @@
 [ext_resource type="PackedScene" uid="uid://dxf2j2dckcm4f" path="res://scenes/gameplay/entities/player_follicle.tscn" id="2_rus8k"]
 [ext_resource type="PackedScene" uid="uid://8bxaana8c1qp" path="res://scenes/gameplay/entities/npc_follicle.tscn" id="3_5xbjy"]
 [ext_resource type="PackedScene" uid="uid://cr4p5m8nq3vwf" path="res://scenes/gameplay/far_field.tscn" id="4_farfield"]
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="5_hud"]
 
 [node name="Level1" type="Node2D" unique_id=825234147]
 
 [node name="FarField" parent="." instance=ExtResource("4_farfield")]
-position = Vector2(640, 80)
 
 [node name="NearField" type="Node2D" parent="." unique_id=2119386231]
 script = ExtResource("1_014kd")
@@ -16,7 +16,6 @@ script = ExtResource("1_014kd")
 [node name="Entities" type="Node2D" parent="NearField" unique_id=1233198906]
 
 [node name="PlayerFollicle" parent="NearField/Entities" unique_id=633670912 instance=ExtResource("2_rus8k")]
-position = Vector2(640, 800)
 
 [node name="NPCFollicle1" parent="NearField/Entities" unique_id=1639706557 instance=ExtResource("3_5xbjy")]
 position = Vector2(200, 600)
@@ -57,3 +56,6 @@ play_rect = null
 position = Vector2(200, 1000)
 speed = null
 play_rect = null
+
+[node name="HUD" type="Control" parent="." unique_id=3847291635]
+script = ExtResource("5_hud")

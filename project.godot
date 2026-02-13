@@ -25,9 +25,9 @@ SecretionManager="*res://scripts/core/SecretionManager.gd"
 [display]
 
 window/size/viewport_width=1200
-window/size/viewport_height=2000
+window/size/viewport_height=1800
 window/size/window_width_override=1200
-window/size/window_height_override=2000
+window/size/window_height_override=1800
 
 [input]
 
