@@ -116,6 +116,7 @@ func _ready() -> void:
 	_emit_status()
 	
 	_init_controller()
+	print("[FollicleBase] Registering %s with FollicleManager" % name)
 	FollicleManager.register_follicle(self)
 
 
@@ -304,6 +305,8 @@ func _update_energy_decay(delta: float) -> void:
 			energy_decay_timer = 0.0
 			energy = clampf(energy - energy_decay_amount, 0.0, energy_max)
 			energy_changed.emit(energy)
+			if not is_player and energy == 0.0:
+				print("[FollicleBase] NPC energy reached 0, zero_energy_timer will start")
 	else:
 		energy_decay_timer = 0.0
 
@@ -311,6 +314,8 @@ func _update_energy_decay(delta: float) -> void:
 		if energy <= 0.0:
 			zero_energy_timer += delta
 			if zero_energy_timer >= zero_energy_death_seconds:
+				if not is_player:
+					print("[FollicleBase] NPC zero energy for %.1fs, triggering death" % zero_energy_timer)
 				_die()
 		else:
 			zero_energy_timer = 0.0
@@ -328,10 +333,15 @@ func _get_stage_rules() -> Dictionary:
 func _die() -> void:
 	if is_dead:
 		return
+	print("[FollicleBase] %s dying (is_player=%s)" % [name, is_player])
 	is_dead = true
 	movement_system.velocity = Vector2.ZERO
 	set_physics_process(false)
+	# Make dead follicle semi-transparent
+	modulate.a = 0.3
+	print("[FollicleBase] Emitting died signal for %s" % name)
 	died.emit(self)
+	print("[FollicleBase] Died signal emitted for %s" % name)
 
 
 func _emit_status() -> void:

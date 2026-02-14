@@ -8,9 +8,13 @@ var follicles: Array[Node] = []
 
 
 func register_follicle(follicle: Node) -> void:
-	if follicle not in follicles:
-		follicles.append(follicle)
-		follicle_registered.emit(follicle)
+	if follicle in follicles:
+		print("[FollicleManager] WARNING: Follicle already registered! %s" % follicle.name)
+		return
+	follicles.append(follicle)
+	var is_player = follicle.get("is_player") if follicle.has_method("get") else "unknown"
+	print("[FollicleManager] Registered follicle: %s (is_player=%s)" % [follicle.name, is_player])
+	follicle_registered.emit(follicle)
 
 
 func unregister_follicle(follicle: Node) -> void:

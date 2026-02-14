@@ -38,7 +38,7 @@
             "pituitary_border_width": 3.0
         },
         "hormone": {
-            "pellet_pool_size": 400,
+            "pellet_pool_size": 600,
             "pellet_lifetime": 40.0,
             "fsh": {
                 "color": {"r": 1.0, "g": 0.4, "b": 0.8},
@@ -75,10 +75,10 @@
                 "default_intensity": 0.5,
                 "min_intensity": 0.05,
                 "recovery_rate": 0.01,
-                "interval_min": 3.0,
+                "interval_min": 1.0,
                 "interval_max": 10.0,
                 "count_min": 6,
-                "count_max": 50,
+                "count_max": 70,
                 "interval_curve": 1.6,
                 "count_curve": 1.0
             },
@@ -127,7 +127,7 @@
         "energy_rules": {
             "decay_interval": 15.0,
             "decay_amount": 1.0,
-            "zero_energy_death_seconds": 20.0
+            "zero_energy_death_seconds": 40.0
         },
         "skill_costs": {
             "skill1": 3.0,

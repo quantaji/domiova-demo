@@ -84,10 +84,13 @@ func _on_secretion_reached_pituitary(_secretion: Secretion, p_type: Secretion.Se
 	if far_field_node == null:
 		far_field_node = _find_far_field()
 	if far_field_node == null:
+		print("[SecretionManager] ERROR: Cannot find far_field node!")
 		return
 	if p_type == Secretion.SecretionType.E2:
+		print("[SecretionManager] E2 reached pituitary, calling apply_e2_feedback()")
 		far_field_node.apply_e2_feedback()
 	else:
+		print("[SecretionManager] Inhibin B reached pituitary, calling apply_inhibin_feedback()")
 		far_field_node.apply_inhibin_feedback()
 
 

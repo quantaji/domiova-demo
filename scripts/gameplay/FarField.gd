@@ -239,12 +239,16 @@ func _on_recovery_tick() -> void:
 		pituitary_fsh_cfg.recovery_rate,
 		pituitary_fsh_cfg.min_intensity
 	)
-	lh_intensity = _recover_intensity(
-		lh_intensity,
-		pituitary_lh_cfg.default_intensity,
-		pituitary_lh_cfg.recovery_rate,
-		pituitary_lh_cfg.min_intensity
-	)
+	# In Stage 3, lock LH intensity at 1.0 (no recovery)
+	if not has_flipped:
+		lh_intensity = _recover_intensity(
+			lh_intensity,
+			pituitary_lh_cfg.default_intensity,
+			pituitary_lh_cfg.recovery_rate,
+			pituitary_lh_cfg.min_intensity
+		)
+	else:
+		lh_intensity = 1.0
 
 
 ## Emit a circular wave of hormone pellets
@@ -306,19 +310,32 @@ func emit_wave(hormone_type: String, pellet_count: int) -> void:
 
 func apply_e2_feedback() -> void:
 	e2_received_count += 1
-	fsh_intensity = _apply_feedback(fsh_intensity, pituitary_feedback_cfg.e2_to_fsh_strength, pituitary_fsh_cfg.min_intensity)
-	lh_intensity = _apply_feedback(lh_intensity, pituitary_feedback_cfg.e2_to_lh_strength, pituitary_lh_cfg.min_intensity)
+	print("[FarField] E2 received! Count: %d / %d, Current stage: %s" % [e2_received_count, flip_e2_count, stage_cfg.current])
+	
+	# Only apply negative feedback before LH surge
+	if not has_flipped:
+		fsh_intensity = _apply_feedback(fsh_intensity, pituitary_feedback_cfg.e2_to_fsh_strength, pituitary_fsh_cfg.min_intensity)
+		lh_intensity = _apply_feedback(lh_intensity, pituitary_feedback_cfg.e2_to_lh_strength, pituitary_lh_cfg.min_intensity)
 
 	if not has_flipped and e2_received_count >= flip_e2_count:
+		print("[FarField] *** STAGE FLIP TO 3! LH SURGE TRIGGERED ***")
 		has_flipped = true
 		lh_intensity = 1.0
-		stage_cfg.current = "3"
+		# Notify StageManager to start victory timer
+		if StageManager:
+			StageManager._transition_to_stage("3")
+		else:
+			stage_cfg.current = "3"
 		_schedule_next_lh()
 
 
 func apply_inhibin_feedback() -> void:
-	fsh_intensity = _apply_feedback(fsh_intensity, pituitary_feedback_cfg.inhibin_to_fsh_strength, pituitary_fsh_cfg.min_intensity)
-	lh_intensity = _apply_feedback(lh_intensity, pituitary_feedback_cfg.inhibin_to_lh_strength, pituitary_lh_cfg.min_intensity)
+	# Only apply negative feedback before LH surge  
+	if not has_flipped:
+		fsh_intensity = _apply_feedback(fsh_intensity, pituitary_feedback_cfg.inhibin_to_fsh_strength, pituitary_fsh_cfg.min_intensity)
+		lh_intensity = _apply_feedback(lh_intensity, pituitary_feedback_cfg.inhibin_to_lh_strength, pituitary_lh_cfg.min_intensity)
+	else:
+		print("[FarField] Inhibin ignored in Stage 3 (LH surge active)")
 
 
 func _schedule_next_fsh() -> void:
