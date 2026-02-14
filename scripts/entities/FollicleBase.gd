@@ -179,7 +179,13 @@ func _physics_process(delta: float) -> void:
 	var direction = Vector2.ZERO
 	if collision_cooldown_timer <= 0:
 		if not is_player and controller is AIController:
-			controller.update(global_position)
+			# Build state dictionary for AI decision making
+			var follicle_state = {
+				"fsh_sensitivity": fsh_sensitivity,
+				"lh_receptor_count": lh_receptor_count,
+				"energy": energy
+			}
+			controller.update(global_position, delta, follicle_state)
 		direction = controller.get_direction()
 	
 	# Update movement

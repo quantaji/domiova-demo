@@ -316,6 +316,23 @@
             "min_speed": 30.0,
             "target_pickup_distance": 12.0,
             "initial_speed_range": {"min": 60.0, "max": 100.0}
+        },
+        "ai": {
+            "perception_radius": 600.0,
+            "target_update_interval": 0.2,
+            "distance_weight": 1.0,
+            "value_weight": 1.0,
+            "energy_threshold_starving": 4.0,
+            "energy_threshold_thriving": 8.0,
+            "starving_mode_max_distance": 300.0,
+            "skill_e2_energy_threshold": 5.0,
+            "skill_e2_rival_threshold": 2,
+            "skill_inhibin_energy_threshold": 7.0,
+            "skill_inhibin_rival_threshold": 3,
+            "skill_lh_receptor_energy_threshold": 7.0,
+            "skill_cooldown_e2": 8.0,
+            "skill_cooldown_inhibin": 12.0,
+            "skill_cooldown_lh_receptor": 15.0
         }
     }
 }

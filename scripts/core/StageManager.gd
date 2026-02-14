@@ -205,14 +205,15 @@ func _check_npc_extinction() -> void:
 	var total_npc_count = 0
 	var alive_npc_count = 0
 	for follicle in FollicleManager.get_all_follicles():
-		if follicle and follicle.has_method("get") and not follicle.get("is_player"):
-			if follicle.is_queued_for_deletion():
-				continue
+		if not is_instance_valid(follicle):
+			continue
+		if follicle.has_method("get") and not follicle.get("is_player"):
 			total_npc_count += 1
-			if not follicle.get("is_dead"):
+			# NPC is alive only if it's not dead AND not queued for deletion
+			if not follicle.get("is_dead") and not follicle.is_queued_for_deletion():
 				alive_npc_count += 1
 	
-	print("[StageManager] Checking NPC extinction: %d/%d NPCs alive" % [alive_npc_count, total_npc_count])
+	print("[StageManager] Checking NPC extinction: %d alive / %d total NPCs" % [alive_npc_count, total_npc_count])
 	if total_npc_count == 0:
 		print("[StageManager] WARNING: No NPCs registered; skipping 2.1 -> 2.2 transition")
 		return
@@ -260,6 +261,24 @@ func _transition_to_stage(new_stage: String) -> void:
 		
 		print("[StageManager] Stage 1 -> 2.0 transition complete")
 		print("[StageManager] Player movement, skills, and NPC AI now active")
+	
+	# Handle Stage 2.1 -> 2.2 transition
+	if old_stage == "2_1" and new_stage == "2_2":
+		print("[StageManager] Executing Stage 2.1 -> 2.2 transition logic...")
+		# Reset E2 count for Stage 2.2 threshold check
+		var far_field_nodes = get_tree().get_nodes_in_group("far_field")
+		print("[StageManager] Found %d far_field nodes" % far_field_nodes.size())
+		if far_field_nodes.size() > 0:
+			var far_field = far_field_nodes[0]
+			print("[StageManager] FarField node: %s, has_method(reset_e2_count): %s" % [far_field.name, far_field.has_method("reset_e2_count")])
+			if far_field.has_method("reset_e2_count"):
+				far_field.reset_e2_count()
+				print("[StageManager] ✓ reset_e2_count() called successfully")
+			else:
+				print("[StageManager] WARNING: FarField missing reset_e2_count method")
+		else:
+			print("[StageManager] ERROR: No FarField node found!")
+		print("[StageManager] Stage 2.1 -> 2.2 transition complete; E2 counting started")
 	
 	# Start victory timer if entering Stage 3
 	if new_stage == "3":

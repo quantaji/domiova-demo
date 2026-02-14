@@ -402,8 +402,15 @@ func emit_rainbow_wave() -> void:
 
 
 func apply_e2_feedback() -> void:
-	e2_received_count += 1
-	print("[FarField] E2 received! Count: %d / %d, Current stage: %s" % [e2_received_count, flip_e2_count, stage_cfg.current])
+	# Refresh stage config from ConfigManager to ensure we have the latest stage
+	var current_stage_cfg = ConfigManager.get_config("world.stage")
+	var current_stage = current_stage_cfg.get("current", "2_0")
+	
+	# Only count E2 in Stage 2.2 (after all NPCs are dead)
+	if current_stage == "2_2":
+		e2_received_count += 1
+	
+	print("[FarField] E2 received! Count: %d / %d, Current stage: %s" % [e2_received_count, flip_e2_count, current_stage])
 	
 	# Only apply negative feedback before LH surge
 	if not has_flipped:
@@ -420,6 +427,13 @@ func apply_e2_feedback() -> void:
 		else:
 			stage_cfg.current = "3"
 		_schedule_next_lh()
+
+
+## Reset E2 count when entering Stage 2.2
+func reset_e2_count() -> void:
+	var old_count = e2_received_count
+	e2_received_count = 0
+	print("[FarField] ✓ E2 count RESET: %d -> 0 (now ready for Stage 2.2)" % old_count)
 
 
 func apply_inhibin_feedback() -> void:
