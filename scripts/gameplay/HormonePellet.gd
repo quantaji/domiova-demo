@@ -29,6 +29,14 @@ var pellet_radius: float = 12.0
 var pellet_color: Color = Color(1.0, 0.4, 0.8)
 var start_position: Vector2 = Vector2.ZERO
 
+# Rainbow mode (dynamic color change)
+var is_rainbow: bool = false
+var wave_id: int = -1
+var rainbow_hue_start: float = 0.0
+var rainbow_hue_cycle_duration: float = 8.0
+var rainbow_saturation: float = 0.9
+var rainbow_value: float = 1.0
+
 # Cached references
 var collision_shape: CollisionShape2D
 
@@ -70,8 +78,21 @@ func activate(
 	if collision_shape and collision_shape.shape is CircleShape2D:
 		(collision_shape.shape as CircleShape2D).radius = pellet_radius
 	
-	# Set color based on type
-	pellet_color = Color(params.color.r, params.color.g, params.color.b)
+	# Check if this is a rainbow pellet (dynamic color)
+	if params.has("rainbow") and params.rainbow:
+		is_rainbow = true
+		wave_id = params.get("wave_id", -1)
+		rainbow_hue_start = params.get("hue_start", 0.0)
+		rainbow_hue_cycle_duration = params.get("hue_cycle_duration", 8.0)
+		rainbow_saturation = params.get("saturation", 0.9)
+		rainbow_value = params.get("value", 1.0)
+		# Initial color
+		pellet_color = Color.from_hsv(rainbow_hue_start, rainbow_saturation, rainbow_value)
+	else:
+		is_rainbow = false
+		wave_id = -1
+		# Set color based on type
+		pellet_color = Color(params.color.r, params.color.g, params.color.b)
 	
 	# Reset lifecycle
 	age = 0.0
@@ -87,6 +108,8 @@ func deactivate() -> void:
 	visible = false
 	set_process(false)
 	age = 0.0
+	is_rainbow = false
+	wave_id = -1
 
 
 func _process(delta: float) -> void:
@@ -111,6 +134,13 @@ func _process(delta: float) -> void:
 	
 	# Apply final position
 	global_position = start_position + base_offset + oscillation_offset
+	
+	# Update rainbow color if applicable
+	if is_rainbow:
+		var hue_progress = fmod(age / rainbow_hue_cycle_duration, 1.0)
+		var current_hue = fmod(rainbow_hue_start + hue_progress, 1.0)
+		pellet_color = Color.from_hsv(current_hue, rainbow_saturation, rainbow_value)
+	
 	queue_redraw()
 
 

@@ -14,3 +14,14 @@ func get_config(path: String):
 	for key in path.split("."):
 		current = current[key]
 	return current
+
+
+func set_config(path: String, value) -> void:
+	var parts = path.split(".")
+	if parts.is_empty():
+		return
+
+	var current = config
+	for i in range(parts.size() - 1):
+		current = current[parts[i]]
+	current[parts[parts.size() - 1]] = value

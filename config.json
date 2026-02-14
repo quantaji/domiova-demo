@@ -38,7 +38,7 @@
             "pituitary_border_width": 3.0
         },
         "hormone": {
-            "pellet_pool_size": 600,
+            "pellet_pool_size": 1500,
             "pellet_lifetime": 40.0,
             "fsh": {
                 "color": {"r": 1.0, "g": 0.4, "b": 0.8},
@@ -99,9 +99,14 @@
             }
         },
         "stage": {
-            "current": "2_0",
+            "current": "1",
             "flip_e2_count": 30,
             "rules": {
+                "1": {
+                    "npc_skill3_allowed": false,
+                    "energy_decay_enabled": false,
+                    "zero_energy_death_enabled": false
+                },
                 "2_0": {
                     "npc_skill3_allowed": false,
                     "energy_decay_enabled": false,
@@ -123,6 +128,45 @@
                     "zero_energy_death_enabled": false
                 }
             }
+        },
+        "stage_1": {
+            "rainbow_wave": {
+                "interval": 3.0,
+                "pellet_count": 100,
+                "pellet_radius": 11.0,
+                "speed": 110.0,
+                "oscillation_amplitude": 30.0,
+                "oscillation_frequency": 0.8,
+                "lifetime": 40.0,
+                "hue_start": 0.0,
+                "hue_cycle_duration": 1.2,
+                "saturation": 0.9,
+                "value": 1.0
+            },
+            "awakening": {
+                "detection_threshold": 60.0,
+                "required_successes": 3,
+                "vibration_duration": 0.5,
+                "vibration_amplitude_ratio": 0.3,
+                "vibration_frequency": 8.0,
+                "min_pellets_for_detection": 10
+            }
+        },
+        "follicle_layout": {
+            "player": {
+                "position_x": 600.0,
+                "position_y": 1200.0
+            },
+            "npcs": [
+                {"position_x": 780.0, "position_y": 1200.0},
+                {"position_x": 727.3, "position_y": 1072.7},
+                {"position_x": 600.0, "position_y": 1020.0},
+                {"position_x": 472.7, "position_y": 1072.7},
+                {"position_x": 420.0, "position_y": 1200.0},
+                {"position_x": 472.7, "position_y": 1327.3},
+                {"position_x": 600.0, "position_y": 1380.0},
+                {"position_x": 727.3, "position_y": 1327.3}
+            ]
         },
         "energy_rules": {
             "decay_interval": 15.0,

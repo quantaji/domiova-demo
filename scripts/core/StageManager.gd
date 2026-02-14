@@ -16,6 +16,7 @@ var victory_shown: bool = false
 func _ready() -> void:
 	stage_cfg = ConfigManager.get_config("world.stage")
 	current_stage = stage_cfg.current
+	print("[StageManager] *** INITIALIZED AT STAGE: %s ***" % current_stage)
 	if FollicleManager:
 		FollicleManager.follicle_registered.connect(_on_follicle_registered)
 		# Defer connection to ensure all follicles are registered
@@ -201,14 +202,21 @@ func _check_npc_extinction() -> void:
 	if not FollicleManager:
 		return
 	
-	var npc_count = 0
+	var total_npc_count = 0
+	var alive_npc_count = 0
 	for follicle in FollicleManager.get_all_follicles():
 		if follicle and follicle.has_method("get") and not follicle.get("is_player"):
+			if follicle.is_queued_for_deletion():
+				continue
+			total_npc_count += 1
 			if not follicle.get("is_dead"):
-				npc_count += 1
+				alive_npc_count += 1
 	
-	print("[StageManager] Checking NPC extinction: %d NPCs alive" % npc_count)
-	if npc_count == 0:
+	print("[StageManager] Checking NPC extinction: %d/%d NPCs alive" % [alive_npc_count, total_npc_count])
+	if total_npc_count == 0:
+		print("[StageManager] WARNING: No NPCs registered; skipping 2.1 -> 2.2 transition")
+		return
+	if alive_npc_count == 0:
 		print("[StageManager] All NPCs dead, triggering 2.1 -> 2.2 transition")
 		_transition_to_stage("2_2")
 
@@ -219,13 +227,39 @@ func _transition_to_stage(new_stage: String) -> void:
 		return
 	
 	print("[StageManager] *** STAGE TRANSITION: %s -> %s ***" % [current_stage, new_stage])
+	var old_stage = current_stage
 	current_stage = new_stage
 	stage_cfg.current = new_stage
 	
-	# Update config reference so all systems see the new stage
-	var full_stage_cfg = ConfigManager.get_config("world.stage")
-	full_stage_cfg.current = new_stage
-	print("[StageManager] Stage config updated. New stage: %s" % full_stage_cfg.current)
+	# Update config so all systems see the new stage
+	if ConfigManager and ConfigManager.has_method("set_config"):
+		ConfigManager.set_config("world.stage.current", new_stage)
+		stage_cfg = ConfigManager.get_config("world.stage")
+		print("[StageManager] Stage config updated. New stage: %s" % stage_cfg.current)
+	else:
+		print("[StageManager] WARNING: ConfigManager.set_config missing; stage may not propagate")
+	
+	# Handle Stage 1 -> 2.0 transition
+	if old_stage == "1" and new_stage == "2_0":
+		print("[StageManager] Executing Stage 1 -> 2.0 transition logic...")
+		
+		# Stop rainbow mode and start normal FSH/LH emission in FarField
+		var far_field_nodes = get_tree().get_nodes_in_group("far_field")
+		if far_field_nodes.size() > 0:
+			var far_field = far_field_nodes[0]
+			if far_field.has_method("stop_rainbow_mode_and_start_normal"):
+				far_field.stop_rainbow_mode_and_start_normal()
+			else:
+				print("[StageManager] ERROR: FarField missing transition method!")
+		else:
+			print("[StageManager] ERROR: FarField not found!")
+		
+		# Reset Stage1Controller state
+		if Stage1Controller:
+			Stage1Controller.reset()
+		
+		print("[StageManager] Stage 1 -> 2.0 transition complete")
+		print("[StageManager] Player movement, skills, and NPC AI now active")
 	
 	# Start victory timer if entering Stage 3
 	if new_stage == "3":

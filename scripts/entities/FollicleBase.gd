@@ -50,6 +50,16 @@ var lh_digest_remaining: Array[float] = []
 # LH receptor configuration
 var lh_receptor_config: Dictionary
 
+# Stage 1 vibration state
+var is_vibrating: bool = false
+var vibration_timer: float = 0.0
+var vibration_duration: float = 0.0
+var vibration_amplitude: float = 0.0
+var vibration_frequency: float = 0.0
+var vibration_direction: Vector2 = Vector2.ZERO
+var origin_position: Vector2 = Vector2.ZERO
+var initial_position: Vector2 = Vector2.ZERO  # Fixed position set by layout
+
 @export var is_player: bool = false
 
 
@@ -118,6 +128,14 @@ func _ready() -> void:
 	_init_controller()
 	print("[FollicleBase] Registering %s with FollicleManager" % name)
 	FollicleManager.register_follicle(self)
+	
+	# Load Stage 1 vibration parameters
+	var stage1_cfg = ConfigManager.get_config("world.stage_1")
+	var awakening_cfg = stage1_cfg.awakening
+	vibration_duration = awakening_cfg.vibration_duration
+	vibration_amplitude = radius * awakening_cfg.vibration_amplitude_ratio
+	vibration_frequency = awakening_cfg.vibration_frequency
+	# origin_position will be captured dynamically when vibrate() is called
 
 
 func _exit_tree() -> void:
@@ -131,7 +149,20 @@ func _init_controller() -> void:
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
-
+	
+	# In Stage 1, follicles are stationary (awaiting awakening)
+	var stage_cfg = ConfigManager.get_config("world.stage")
+	var current_stage = stage_cfg.get("current", "2_0")
+	if current_stage == "1":
+		# Process vibration if active
+		if is_vibrating:
+			_process_vibration(delta)
+		# Still update visual elements like receptor rotation
+		if lh_receptor_count > 0:
+			rotation_angle += deg_to_rad(lh_receptor_config.rotation_speed) * delta
+			queue_redraw()
+		return
+	
 	# Decrease collision cooldown
 	if collision_cooldown_timer > 0:
 		collision_cooldown_timer -= delta
@@ -328,6 +359,73 @@ func _get_stage_rules() -> Dictionary:
 	if stage_cfg.rules.has(current):
 		return stage_cfg.rules[current]
 	return {}
+
+
+## Set the initial position (called by NearField after layout)
+func set_initial_position(pos: Vector2) -> void:
+	initial_position = pos
+
+
+## Stage 1: Trigger circular vibration (awakening animation)
+func vibrate(direction: Vector2 = Vector2.ZERO) -> void:
+	# Use fixed initial position instead of current position
+	origin_position = initial_position
+	
+	# For circular motion, direction determines starting angle
+	# If no direction specified, choose random starting angle
+	var start_angle: float
+	if direction.length_squared() < 0.01:
+		start_angle = randf_range(0, TAU)
+	else:
+		start_angle = direction.angle()
+	
+	# Store vibration state
+	is_vibrating = true
+	vibration_timer = 0.0
+	# Store starting angle in direction's x component
+	vibration_direction = Vector2(start_angle, 0)
+	
+	print("[FollicleBase] %s CAPTURED origin: (%.1f, %.1f), start_angle: %.1f°, amplitude: %.1fpx, duration: %.2fs" % [
+		name,
+		origin_position.x,
+		origin_position.y,
+		rad_to_deg(start_angle),
+		vibration_amplitude,
+		vibration_duration
+	])
+
+
+## Process circular vibration motion
+func _process_vibration(delta: float) -> void:
+	if not is_vibrating:
+		return
+	
+	vibration_timer += delta
+	
+	# Check if vibration completed
+	if vibration_timer >= vibration_duration:
+		is_vibrating = false
+		print("[FollicleBase] %s BEFORE归位: current pos (%.1f, %.1f), origin (%.1f, %.1f)" % [
+			name, global_position.x, global_position.y, origin_position.x, origin_position.y
+		])
+		global_position = origin_position  # Snap back to origin
+		print("[FollicleBase] %s AFTER归位: current pos (%.1f, %.1f)" % [
+			name, global_position.x, global_position.y
+		])
+		return
+	
+	# Calculate circular motion: 
+	# x(t) = A × cos(2πft + θ₀)
+	# y(t) = A × sin(2πft + θ₀)
+	var start_angle = vibration_direction.x
+	var phase = TAU * vibration_frequency * vibration_timer + start_angle
+	var offset = Vector2(
+		vibration_amplitude * cos(phase),
+		vibration_amplitude * sin(phase)
+	)
+	
+	# Apply offset from origin position
+	global_position = origin_position + offset
 
 
 func _die() -> void:

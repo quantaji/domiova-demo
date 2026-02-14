@@ -44,6 +44,11 @@ var has_flipped: bool = false
 var fsh_timer: Timer
 var lh_timer: Timer
 var recovery_timer: Timer
+var rainbow_timer: Timer
+
+# Stage 1 rainbow wave configuration
+var rainbow_config: Dictionary
+var current_wave_id: int = 0
 
 
 func _ready() -> void:
@@ -110,6 +115,9 @@ func _load_config() -> void:
 	
 	# Load pellet scene
 	pellet_scene = load("res://scenes/gameplay/entities/hormone_pellet.tscn")
+	
+	# Load rainbow wave configuration for Stage 1
+	rainbow_config = ConfigManager.get_config("world.stage_1.rainbow_wave")
 
 
 ## Initialize object pool with pre-created pellets
@@ -160,6 +168,8 @@ func _get_pellet_from_pool() -> Area2D:
 		pellet_container.add_child(pellet)
 		if pellet.has_signal("pellet_expired"):
 			pellet.pellet_expired.connect(_on_pellet_expired)
+		# CRITICAL: Add new pellet to active_pellets so Stage1Controller can see it
+		active_pellets.append(pellet)
 		return pellet
 	
 	pellet = available_pellets.pop_back()
@@ -187,8 +197,16 @@ func get_pool_stats() -> Dictionary:
 	}
 
 
+## Get all active pellets (for Stage 1 distance detection)
+func get_active_pellets() -> Array[Area2D]:
+	return active_pellets
+
+
 ## Setup test emission timer
 func _setup_test_timer() -> void:
+	# Check current stage - only start FSH/LH in Stage 2+
+	var current_stage = stage_cfg.get("current", "2_0")
+	
 	# FSH timer
 	fsh_timer = Timer.new()
 	fsh_timer.one_shot = true
@@ -201,21 +219,41 @@ func _setup_test_timer() -> void:
 	lh_timer.timeout.connect(_on_lh_emission)
 	add_child(lh_timer)
 
-	_schedule_next_fsh()
-	_schedule_next_lh()
+	# Only schedule FSH/LH in Stage 2 and beyond
+	# Rainbow wave timer for Stage 1
+	rainbow_timer = Timer.new()
+	rainbow_timer.one_shot = false
+	rainbow_timer.timeout.connect(_on_rainbow_emission)
+	add_child(rainbow_timer)
 	
-	print("[FarField] Emission timers started:")
-	print("  FSH: dynamic interval/count (intensity-driven)")
-	print("  LH:  dynamic interval/count (intensity-driven)")
+	if current_stage == "1":
+		# Stage 1: Rainbow wave mode
+		rainbow_timer.wait_time = rainbow_config.interval
+		rainbow_timer.start()
+		print("[FarField] *** STAGE 1 MODE *** - Rainbow wave active")
+		print("  Rainbow: %d pellets every %.1fs" % [rainbow_config.pellet_count, rainbow_config.interval])
+	else:
+		# Stage 2+: Normal FSH/LH mode
+		_schedule_next_fsh()
+		_schedule_next_lh()
+		print("[FarField] Emission timers started (Stage %s):" % current_stage)
+		print("  FSH: dynamic interval/count (intensity-driven)")
+		print("  LH:  dynamic interval/count (intensity-driven)")
 
 
 func _setup_recovery_timer() -> void:
+	var current_stage = stage_cfg.get("current", "2_0")
+	
 	recovery_timer = Timer.new()
 	recovery_timer.wait_time = recovery_tick
 	recovery_timer.one_shot = false
 	recovery_timer.timeout.connect(_on_recovery_tick)
-	recovery_timer.autostart = true
+	# Only auto-start in Stage 2+
+	recovery_timer.autostart = (current_stage != "1")
 	add_child(recovery_timer)
+	
+	if current_stage == "1":
+		print("[FarField] Recovery timer disabled for Stage 1")
 
 
 ## FSH emission callback
@@ -230,6 +268,12 @@ func _on_lh_emission() -> void:
 	var count = _compute_count(lh_intensity, pituitary_lh_cfg)
 	emit_wave("LH", count)
 	_schedule_next_lh()
+
+
+## Rainbow wave emission callback (Stage 1 only)
+func _on_rainbow_emission() -> void:
+	current_wave_id += 1
+	emit_rainbow_wave()
 
 
 func _on_recovery_tick() -> void:
@@ -308,6 +352,55 @@ func emit_wave(hormone_type: String, pellet_count: int) -> void:
 	print("[FarField] Emitted %s wave: %d pellets" % [hormone_type, pellet_count])
 
 
+## Emit a rainbow wave of pellets (Stage 1 awakening mechanic)
+## All pellets start with the same color but change hue over time as they propagate
+func emit_rainbow_wave() -> void:
+	var pellet_count = rainbow_config.pellet_count
+	if pellet_count <= 0:
+		return
+	
+	# Calculate emission angles (full 360° circle)
+	var angle_range = _calculate_emission_angles()
+	var start_angle = angle_range.x
+	var end_angle = angle_range.y
+	var angle_span = end_angle - start_angle
+	
+	# Emit pellets with dynamic rainbow color (time-based, not position-based)
+	for i in range(pellet_count):
+		var pellet = _get_pellet_from_pool()
+		if not pellet:
+			continue
+		
+		# Calculate angle for this pellet
+		var t = float(i) / float(pellet_count - 1) if pellet_count > 1 else 0.5
+		var angle = start_angle + angle_span * t
+		var direction = Vector2(cos(angle), sin(angle))
+		
+		# Calculate spawn position
+		var spawn_pos = global_position + direction * pituitary_radius
+		
+		# Prepare pellet parameters with rainbow mode enabled
+		var params = {
+			"speed": rainbow_config.speed,
+			"oscillation_amplitude": rainbow_config.oscillation_amplitude,
+			"oscillation_frequency": rainbow_config.oscillation_frequency,
+			"lifetime": rainbow_config.lifetime,
+			"radius": rainbow_config.pellet_radius,
+			"rainbow": true,
+			"wave_id": current_wave_id,
+			"hue_start": rainbow_config.hue_start,
+			"hue_cycle_duration": rainbow_config.hue_cycle_duration,
+			"saturation": rainbow_config.saturation,
+			"value": rainbow_config.value,
+			"color": {"r": 1.0, "g": 0.0, "b": 0.0}  # Dummy color, will be overridden
+		}
+		
+		# Activate as neutral pellet (type -1 = rainbow, no hormone effect)
+		pellet.activate(spawn_pos, direction, -1, params)
+	
+	print("[FarField] Emitted rainbow wave #%d: %d pellets (dynamic hue)" % [current_wave_id, pellet_count])
+
+
 func apply_e2_feedback() -> void:
 	e2_received_count += 1
 	print("[FarField] E2 received! Count: %d / %d, Current stage: %s" % [e2_received_count, flip_e2_count, stage_cfg.current])
@@ -377,3 +470,34 @@ func _apply_feedback(current: float, strength: float, minimum: float) -> float:
 func _calculate_emission_angles() -> Vector2:
 	# Emit in all directions (full circle)
 	return Vector2(0, TAU)
+
+
+## Switch from Stage 1 rainbow mode to normal FSH/LH emission mode
+func stop_rainbow_mode_and_start_normal() -> void:
+	print("[FarField] *** TRANSITIONING FROM STAGE 1 TO STAGE 2 ***")
+	
+	# Stop rainbow wave timer
+	if rainbow_timer:
+		rainbow_timer.stop()
+		print("[FarField] Rainbow wave timer stopped")
+	
+	# Clear any remaining rainbow pellets
+	var cleared_count = 0
+	for pellet in active_pellets.duplicate():  # Use duplicate to avoid modification during iteration
+		if pellet.wave_id >= 0:  # Rainbow pellets have wave_id >= 0
+			pellet.deactivate()
+			_return_pellet_to_pool(pellet)
+			cleared_count += 1
+	print("[FarField] Cleared %d rainbow pellets" % cleared_count)
+	
+	# Start normal FSH/LH emission
+	_schedule_next_fsh()
+	_schedule_next_lh()
+	print("[FarField] FSH/LH emission timers started")
+	
+	# Start recovery timer
+	if recovery_timer:
+		recovery_timer.start()
+		print("[FarField] Recovery timer started")
+	
+	print("[FarField] Transition complete - normal hormone emission active")

@@ -22,6 +22,7 @@ FollicleManager="*res://scripts/core/FollicleManager.gd"
 CollisionManager="*res://scripts/core/CollisionManager.gd"
 SecretionManager="*res://scripts/core/SecretionManager.gd"
 StageManager="*res://scripts/core/StageManager.gd"
+Stage1Controller="*res://scripts/core/Stage1Controller.gd"
 
 [display]
 
