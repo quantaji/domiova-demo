@@ -20,7 +20,7 @@ var border_width: float
 func _ready() -> void:
 	_load_config()
 	size = Vector2(bar_width, bar_height)
-	set_current_energy(6)  # Default to 6/12 for demo
+	set_current_energy(0)
 
 
 func _load_config() -> void:

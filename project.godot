@@ -21,6 +21,7 @@ ConfigManager="*res://scripts/core/ConfigManager.gd"
 FollicleManager="*res://scripts/core/FollicleManager.gd"
 CollisionManager="*res://scripts/core/CollisionManager.gd"
 SecretionManager="*res://scripts/core/SecretionManager.gd"
+StageManager="*res://scripts/core/StageManager.gd"
 
 [display]
 

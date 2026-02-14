@@ -28,18 +28,27 @@ func _physics_process(delta: float) -> void:
 	# Update pseudo-AI secretion timers
 	e2_timer -= delta
 	if e2_timer <= 0:
-		emit_e2()
+		var cost = get_skill_cost(SKILL_E2)
+		if can_use_skill(SKILL_E2) and spend_energy(cost):
+			apply_sensitivity_buff()
+			emit_e2()
 		e2_timer = randf_range(5.0, 10.0)
 	
 	inhibin_b_timer -= delta
 	if inhibin_b_timer <= 0:
-		emit_inhibin_b()
+		var cost = get_skill_cost(SKILL_INHIBIN)
+		if can_use_skill(SKILL_INHIBIN) and spend_energy(cost):
+			emit_inhibin_b()
 		inhibin_b_timer = randf_range(5.0, 10.0)
 	
 	# Update skill 3 (LH receptor) timer
 	skill3_timer -= delta
 	if skill3_timer <= 0:
-		acquire_lh_receptor()
+		var cost = get_skill_cost(SKILL_LH_RECEPTOR)
+		if can_use_skill(SKILL_LH_RECEPTOR) and spend_energy(cost):
+			if not acquire_lh_receptor():
+				energy = clampf(energy + cost, 0.0, energy_max)
+				energy_changed.emit(energy)
 		skill3_timer = randf_range(5.0, 10.0)
 	
 	# Call parent physics process for normal movement

@@ -42,7 +42,7 @@
             "pellet_lifetime": 40.0,
             "fsh": {
                 "color": {"r": 1.0, "g": 0.4, "b": 0.8},
-                "speed": 90.0,
+                "speed": 110.0,
                 "oscillation_amplitude": 50.0,
                 "oscillation_frequency": 0.5,
                 "emission_interval": 4.0,
@@ -51,13 +51,95 @@
             },
             "lh": {
                 "color": {"r": 1.0, "g": 0.9, "b": 0.2},
-                "speed": 90.0,
+                "speed": 110.0,
                 "oscillation_amplitude": 15.0,
                 "oscillation_frequency": 1.2,
                 "emission_interval": 8.12512413412,
                 "emission_count": 40,
                 "pellet_radius": 10.5
             }
+        },
+        "pituitary": {
+            "fsh": {
+                "default_intensity": 0.5,
+                "min_intensity": 0.0,
+                "recovery_rate": 0.02,
+                "interval_min": 2.0,
+                "interval_max": 20.0,
+                "count_min": 1,
+                "count_max": 80,
+                "interval_curve": 1.6,
+                "count_curve": 1.0
+            },
+            "lh": {
+                "default_intensity": 0.5,
+                "min_intensity": 0.05,
+                "recovery_rate": 0.01,
+                "interval_min": 3.0,
+                "interval_max": 10.0,
+                "count_min": 6,
+                "count_max": 50,
+                "interval_curve": 1.6,
+                "count_curve": 1.0
+            },
+            "feedback": {
+                "e2_to_fsh_strength": 0.03,
+                "e2_to_lh_strength": 0.015,
+                "inhibin_to_fsh_strength": 0.05,
+                "inhibin_to_lh_strength": 0.02
+            },
+            "recovery_tick": 1.0
+        },
+        "receptor_digest": {
+            "fsh": {
+                "digest_time": 2.0
+            },
+            "lh": {
+                "digest_time": 4.0
+            }
+        },
+        "stage": {
+            "current": "2_0",
+            "flip_e2_count": 30,
+            "rules": {
+                "2_0": {
+                    "npc_skill3_allowed": false,
+                    "energy_decay_enabled": false,
+                    "zero_energy_death_enabled": false
+                },
+                "2_1": {
+                    "npc_skill3_allowed": true,
+                    "energy_decay_enabled": true,
+                    "zero_energy_death_enabled": true
+                },
+                "2_2": {
+                    "npc_skill3_allowed": true,
+                    "energy_decay_enabled": false,
+                    "zero_energy_death_enabled": false
+                },
+                "3": {
+                    "npc_skill3_allowed": true,
+                    "energy_decay_enabled": false,
+                    "zero_energy_death_enabled": false
+                }
+            }
+        },
+        "energy_rules": {
+            "decay_interval": 15.0,
+            "decay_amount": 1.0,
+            "zero_energy_death_seconds": 20.0
+        },
+        "skill_costs": {
+            "skill1": 3.0,
+            "skill2": 5.0,
+            "skill3": 10.0
+        },
+        "skill_effects": {
+            "e2_sensitivity_increment": 1.0
+        },
+        "energy": {
+            "fsh_base_energy": 1.0,
+            "lh_base_energy": 1.0
         },
         "secretion": {
             "e2": {
@@ -143,6 +225,15 @@
         }
     },
     "player_follicle": {
+        "energy": {
+            "initial": 1.0,
+            "max": 12.0
+        },
+        "sensitivity": {
+            "initial": 1.0,
+            "min": 1.0,
+            "max": 5.0
+        },
         "size": {
             "collision_radius": 40.0
         },
@@ -159,6 +250,15 @@
     },
     "npc_follicle": {
         "count": 8,
+        "energy": {
+            "initial": 1.0,
+            "max": 12.0
+        },
+        "sensitivity": {
+            "initial": 1.0,
+            "min": 1.0,
+            "max": 5.0
+        },
         "size": {
             "collision_radius": 40.0
         },

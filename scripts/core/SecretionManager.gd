@@ -2,9 +2,6 @@
 ## Handles activation, pooling, and recycling of secretion particles
 extends Node
 
-# Singleton instance
-var _instance: SecretionManager = null
-
 # Object pools (independent for each secretion type)
 var e2_pool: Array[Secretion] = []
 var inhibin_b_pool: Array[Secretion] = []
@@ -16,11 +13,13 @@ var inhibin_b_config: Dictionary
 var near_field_rect: Rect2
 var pituitary_position: Vector2
 var pituitary_radius: float
+var far_field_node: Node = null
 
 
 func _ready() -> void:
 	_load_config()
 	_initialize_pools()
+	far_field_node = _find_far_field()
 
 
 ## Load configuration from ConfigManager
@@ -71,6 +70,25 @@ func _expand_pool(p_type: Secretion.SecretionType, p_count: int) -> void:
 		
 		# Connect recycling signal
 		secretion.secretion_recycled.connect(_on_secretion_recycled.bind(secretion, p_type))
+		secretion.reached_pituitary.connect(_on_secretion_reached_pituitary.bind(p_type))
+
+
+func _find_far_field() -> Node:
+	var nodes = get_tree().get_nodes_in_group("far_field")
+	if nodes.size() > 0:
+		return nodes[0]
+	return null
+
+
+func _on_secretion_reached_pituitary(_secretion: Secretion, p_type: Secretion.SecretionType) -> void:
+	if far_field_node == null:
+		far_field_node = _find_far_field()
+	if far_field_node == null:
+		return
+	if p_type == Secretion.SecretionType.E2:
+		far_field_node.apply_e2_feedback()
+	else:
+		far_field_node.apply_inhibin_feedback()
 
 
 ## Get a secretion particle from pool (or expand if needed)

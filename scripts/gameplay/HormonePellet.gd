@@ -39,11 +39,9 @@ func _ready() -> void:
 	
 	set_process(false)  # Disabled until activated
 	visible = false
+	collision_mask = 1
 	
-	# NOTE: Collision interaction disabled for now
-	# Will be implemented later with receptor logic and cooldown system
-	# area_entered.connect(_on_area_entered)
-	# body_entered.connect(_on_body_entered)
+	body_entered.connect(_on_body_entered)
 
 
 ## Activate pellet from object pool
@@ -123,6 +121,17 @@ func _expire() -> void:
 		deactivate()
 
 
+func _on_body_entered(body: Node) -> void:
+	if not is_active:
+		return
+	if body == null:
+		return
+	if body.has_method("try_digest"):
+		var accepted = body.try_digest(hormone_type)
+		if accepted:
+			_expire()
+
+
 ## Get hormone type as string (for debugging)
 func get_type_string() -> String:
 	return "FSH" if hormone_type == HormoneType.FSH else "LH"
@@ -135,25 +144,4 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, pellet_radius, pellet_color)
 
 
-# ===== Collision Interaction (Disabled for now) =====
-# TODO: Implement receptor-based absorption logic
-# - FSH: Can be absorbed immediately by all follicles
-# - LH: Requires LH receptor (unlocked at maturity)
-# - Cooldown system: 10s between absorptions per follicle
-# - Energy transfer from pellet to follicle
-#
-# func _on_area_entered(_area: Area2D) -> void:
-# 	if is_active:
-# 		_check_absorption(_area)
-#
-# func _on_body_entered(_body: Node2D) -> void:
-# 	if is_active:
-# 		_check_absorption(_body)
-#
-# func _check_absorption(target: Node) -> void:
-# 	# Check if target is a follicle
-# 	# Check receptor availability
-# 	# Check cooldown
-# 	# Transfer energy
-# 	# Expire pellet
-# 	pass
+## Collision absorption now uses receptor digestion in FollicleBase.

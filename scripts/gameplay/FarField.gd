@@ -26,19 +26,36 @@ var fsh_config: Dictionary
 var lh_config: Dictionary
 var hormone_config: Dictionary
 
+# Pituitary intensity model
+var pituitary_fsh_cfg: Dictionary
+var pituitary_lh_cfg: Dictionary
+var pituitary_feedback_cfg: Dictionary
+var recovery_tick: float = 1.0
+var fsh_intensity: float = 0.5
+var lh_intensity: float = 0.5
+
+# Stage flip tracking
+var stage_cfg: Dictionary
+var e2_received_count: int = 0
+var flip_e2_count: int = 30
+var has_flipped: bool = false
+
 # Test emission timers (independent for FSH and LH)
 var fsh_timer: Timer
 var lh_timer: Timer
+var recovery_timer: Timer
 
 
 func _ready() -> void:
 	# Get scene references
 	emission_origin = $EmissionOrigin
 	pellet_container = $PelletContainer
+	add_to_group("far_field")
 	
 	_load_config()
 	_initialize_pellet_pool()
 	_setup_test_timer()
+	_setup_recovery_timer()
 	queue_redraw()
 
 
@@ -74,6 +91,22 @@ func _load_config() -> void:
 	hormone_config = ConfigManager.get_config("world.hormone")
 	fsh_config = hormone_config.fsh
 	lh_config = hormone_config.lh
+
+	# Load pituitary model configurations
+	var pituitary_cfg = ConfigManager.get_config("world.pituitary")
+	pituitary_fsh_cfg = pituitary_cfg.fsh
+	pituitary_lh_cfg = pituitary_cfg.lh
+	pituitary_feedback_cfg = pituitary_cfg.feedback
+	recovery_tick = pituitary_cfg.recovery_tick
+
+	fsh_intensity = pituitary_fsh_cfg.default_intensity
+	lh_intensity = pituitary_lh_cfg.default_intensity
+
+	# Stage config for flip threshold
+	stage_cfg = ConfigManager.get_config("world.stage")
+	flip_e2_count = stage_cfg.flip_e2_count
+	e2_received_count = 0
+	has_flipped = false
 	
 	# Load pellet scene
 	pellet_scene = load("res://scenes/gameplay/entities/hormone_pellet.tscn")
@@ -158,31 +191,60 @@ func get_pool_stats() -> Dictionary:
 func _setup_test_timer() -> void:
 	# FSH timer
 	fsh_timer = Timer.new()
-	fsh_timer.wait_time = fsh_config.emission_interval
+	fsh_timer.one_shot = true
 	fsh_timer.timeout.connect(_on_fsh_emission)
-	fsh_timer.autostart = true
 	add_child(fsh_timer)
 	
 	# LH timer
 	lh_timer = Timer.new()
-	lh_timer.wait_time = lh_config.emission_interval
+	lh_timer.one_shot = true
 	lh_timer.timeout.connect(_on_lh_emission)
-	lh_timer.autostart = true
 	add_child(lh_timer)
+
+	_schedule_next_fsh()
+	_schedule_next_lh()
 	
 	print("[FarField] Emission timers started:")
-	print("  FSH: %d pellets every %.1f seconds" % [fsh_config.emission_count, fsh_config.emission_interval])
-	print("  LH:  %d pellets every %.1f seconds" % [lh_config.emission_count, lh_config.emission_interval])
+	print("  FSH: dynamic interval/count (intensity-driven)")
+	print("  LH:  dynamic interval/count (intensity-driven)")
+
+
+func _setup_recovery_timer() -> void:
+	recovery_timer = Timer.new()
+	recovery_timer.wait_time = recovery_tick
+	recovery_timer.one_shot = false
+	recovery_timer.timeout.connect(_on_recovery_tick)
+	recovery_timer.autostart = true
+	add_child(recovery_timer)
 
 
 ## FSH emission callback
 func _on_fsh_emission() -> void:
-	emit_wave("FSH", fsh_config.emission_count)
+	var count = _compute_count(fsh_intensity, pituitary_fsh_cfg)
+	emit_wave("FSH", count)
+	_schedule_next_fsh()
 
 
 ## LH emission callback
 func _on_lh_emission() -> void:
-	emit_wave("LH", lh_config.emission_count)
+	var count = _compute_count(lh_intensity, pituitary_lh_cfg)
+	emit_wave("LH", count)
+	_schedule_next_lh()
+
+
+func _on_recovery_tick() -> void:
+	fsh_intensity = _recover_intensity(
+		fsh_intensity,
+		pituitary_fsh_cfg.default_intensity,
+		pituitary_fsh_cfg.recovery_rate,
+		pituitary_fsh_cfg.min_intensity
+	)
+	lh_intensity = _recover_intensity(
+		lh_intensity,
+		pituitary_lh_cfg.default_intensity,
+		pituitary_lh_cfg.recovery_rate,
+		pituitary_lh_cfg.min_intensity
+	)
 
 
 ## Emit a circular wave of hormone pellets
@@ -240,6 +302,56 @@ func emit_wave(hormone_type: String, pellet_count: int) -> void:
 		pellet.activate(spawn_pos, direction, pellet_type, params)
 	
 	print("[FarField] Emitted %s wave: %d pellets" % [hormone_type, pellet_count])
+
+
+func apply_e2_feedback() -> void:
+	e2_received_count += 1
+	fsh_intensity = _apply_feedback(fsh_intensity, pituitary_feedback_cfg.e2_to_fsh_strength, pituitary_fsh_cfg.min_intensity)
+	lh_intensity = _apply_feedback(lh_intensity, pituitary_feedback_cfg.e2_to_lh_strength, pituitary_lh_cfg.min_intensity)
+
+	if not has_flipped and e2_received_count >= flip_e2_count:
+		has_flipped = true
+		lh_intensity = 1.0
+		stage_cfg.current = "3"
+		_schedule_next_lh()
+
+
+func apply_inhibin_feedback() -> void:
+	fsh_intensity = _apply_feedback(fsh_intensity, pituitary_feedback_cfg.inhibin_to_fsh_strength, pituitary_fsh_cfg.min_intensity)
+	lh_intensity = _apply_feedback(lh_intensity, pituitary_feedback_cfg.inhibin_to_lh_strength, pituitary_lh_cfg.min_intensity)
+
+
+func _schedule_next_fsh() -> void:
+	var interval = _compute_interval(fsh_intensity, pituitary_fsh_cfg)
+	fsh_timer.wait_time = interval
+	fsh_timer.start()
+
+
+func _schedule_next_lh() -> void:
+	var interval = _compute_interval(lh_intensity, pituitary_lh_cfg)
+	lh_timer.wait_time = interval
+	lh_timer.start()
+
+
+func _compute_interval(intensity: float, cfg: Dictionary) -> float:
+	var clamped = clamp(intensity, 0.0, 1.0)
+	var t = pow(clamped, cfg.interval_curve)
+	return cfg.interval_max - (cfg.interval_max - cfg.interval_min) * t
+
+
+func _compute_count(intensity: float, cfg: Dictionary) -> int:
+	var clamped = clamp(intensity, 0.0, 1.0)
+	var t = pow(clamped, cfg.count_curve)
+	return int(ceil(cfg.count_min + (cfg.count_max - cfg.count_min) * t))
+
+
+func _recover_intensity(current: float, target: float, rate: float, minimum: float) -> float:
+	var next_val = (current - target) * (1.0 - rate) + target
+	return clamp(next_val, minimum, 1.0)
+
+
+func _apply_feedback(current: float, strength: float, minimum: float) -> float:
+	return clamp(current - strength, minimum, 1.0)
 
 
 ## Calculate the emission angle range

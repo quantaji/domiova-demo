@@ -1,12 +1,16 @@
 [gd_scene format=3 uid="uid://dhtsfrsgl43go"]
 
-[ext_resource type="Script" uid="uid://bsoy83yi2rcd" path="res://scripts/gameplay/NearField.gd" id="1_014kd"]
+[ext_resource type="Script" path="res://scripts/gameplay/NearField.gd" id="1_014kd"]
 [ext_resource type="PackedScene" uid="uid://dxf2j2dckcm4f" path="res://scenes/gameplay/entities/player_follicle.tscn" id="2_rus8k"]
 [ext_resource type="PackedScene" uid="uid://8bxaana8c1qp" path="res://scenes/gameplay/entities/npc_follicle.tscn" id="3_5xbjy"]
 [ext_resource type="PackedScene" uid="uid://cr4p5m8nq3vwf" path="res://scenes/gameplay/far_field.tscn" id="4_farfield"]
 [ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="5_hud"]
 
 [node name="Level1" type="Node2D" unique_id=825234147]
+
+[node name="HUD" type="Control" parent="."]
+script = ExtResource("5_hud")
+z_index = 100
 
 [node name="FarField" parent="." instance=ExtResource("4_farfield")]
 
@@ -57,5 +61,3 @@ position = Vector2(200, 1000)
 speed = null
 play_rect = null
 
-[node name="HUD" type="Control" parent="." unique_id=3847291635]
-script = ExtResource("5_hud")

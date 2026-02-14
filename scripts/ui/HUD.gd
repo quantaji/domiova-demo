@@ -9,6 +9,7 @@ var right_panel: RightPanel
 func _ready() -> void:
 	# Set to full screen size
 	size = get_viewport().get_visible_rect().size
+	add_to_group("hud")
 	
 	# Create left panel
 	left_panel = LeftPanel.new()
